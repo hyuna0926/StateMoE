@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# StateMoE 로버스트니스 평가
+# StateMoE robustness evaluation
 # clean -> GPU 1
 # noisy -> GPU 2, missing -> GPU 3, mixed -> GPU 4
 # ============================================================
@@ -103,7 +103,7 @@ collect_result() {
 
     if [[ ! -f "${result_file}" ]]; then
         RESULTS["${tag}"]="FAIL"
-        log "[WARN] 결과 파일 없음: ${tag}"
+        log "[WARN] Result file not found: ${tag}"
         return
     fi
 
@@ -119,11 +119,11 @@ collect_result() {
             ;;
         FAIL)
             RESULTS["${tag}"]="FAIL"
-            log "[WARN] 실행 실패: ${tag} (log: ${logfile})"
+            log "[WARN] Run failed: ${tag} (log: ${logfile})"
             ;;
         *)
             RESULTS["${tag}"]="FAIL"
-            log "[WARN] 알 수 없는 결과 상태: ${tag} (${status})"
+            log "[WARN] Unknown result status: ${tag} (${status})"
             ;;
     esac
 }
@@ -297,7 +297,7 @@ done
 COND_TYPES="${CORR_TYPES# }"
 
 log "================================================================"
-log "  ${MODEL_NAME} 로버스트니스 평가 시작: $(date)"
+log "  Starting ${MODEL_NAME} robustness evaluation: $(date)"
 log "  Dataset: ${DATASET_DIR}"
 log "  Conditions: clean + ${COND_TYPES:-<none>} × ratios ${RATIOS}"
 log "  clean GPU: ${GPU_ID} | noisy GPU: ${NOISY_GPU} | missing GPU: ${MISSING_GPU} | mixed GPU: ${MIXED_GPU}"
@@ -306,7 +306,7 @@ log "  Graph build: device=${GRAPH_BUILD_DEVICE}, chunk=${GRAPH_BUILD_CHUNK_SIZE
 log "  Repair targets: image=${CLEAN_IMG_FILE}, text=${CLEAN_TXT_FILE}"
 log "================================================================"
 
-log "[${MODEL_NAME}][clean] 시작... gpu=${GPU_ID}"
+log "[${MODEL_NAME}][clean] Starting... gpu=${GPU_ID}"
 run_clean_async "${GPU_ID}" &
 JOB_TAGS+=("clean")
 JOB_PIDS+=("$!")
@@ -316,7 +316,7 @@ if [[ -n "${COND_TYPES}" ]]; then
         for ratio in ${RATIOS}; do
             tag="${ctype}${ratio}"
             assigned_gpu="$(get_gpu_for_condition "${ctype}")"
-            log "[${MODEL_NAME}][${tag}] 시작... gpu=${assigned_gpu}"
+            log "[${MODEL_NAME}][${tag}] Starting... gpu=${assigned_gpu}"
             run_one_async "${ctype}" "${ratio}" "${assigned_gpu}" &
             JOB_TAGS+=("${tag}")
             JOB_PIDS+=("$!")
@@ -333,7 +333,7 @@ done
 
 log ""
 log "═══════════════════════════════════════════════════"
-log "  ${MODEL_NAME} 결과 요약 (recall@10 / ndcg@10)"
+log "  ${MODEL_NAME} result summary (recall@10 / ndcg@10)"
 log "  Dataset: ${DATASET_NAME}  |  $(date)"
 log "═══════════════════════════════════════════════════"
 log "$(printf '%-15s  %s' 'Condition' 'recall@10 / ndcg@10')"
@@ -347,4 +347,4 @@ if [[ -n "${COND_TYPES}" ]]; then
     done
 fi
 log "═══════════════════════════════════════════════════"
-log "결과 파일: ${SUMMARY_FILE}"
+log "Result file: ${SUMMARY_FILE}"
